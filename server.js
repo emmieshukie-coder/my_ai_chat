@@ -22,8 +22,16 @@ app.get('/', (req, res) => {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       background: #fff; display: flex; flex-direction: column; color: #111;
     }
-    header { padding: 14px 16px; background: #111; color: white; }
+    header {
+      padding: 14px 16px; background: #111; color: white;
+      display: flex; align-items: center; justify-content: space-between;
+    }
     header h2 { font-size: 17px; font-weight: 600; }
+   .clear-btn {
+      background: transparent; border: 1px solid #555; color: white;
+      padding: 6px 10px; border-radius: 8px; font-size: 13px; cursor: pointer;
+    }
+   .clear-btn:active { background: #333; }
 
     #chat { flex: 1; overflow-y: auto; padding: 16px; background: #fff; min-height: 0; }
 .msg { margin: 12px 0; padding: 10px 14px; border-radius: 18px; max-width: 85%; word-wrap: break-word; font-size: 15px; line-height: 1.5; }
@@ -60,7 +68,10 @@ app.get('/', (req, res) => {
   </style>
 </head>
 <body>
-  <header><h2>My AI Chat</h2></header>
+  <header>
+    <h2>My AI Chat</h2>
+    <button class="clear-btn" onclick="clearChat()">Clear</button>
+  </header>
   <div id="chat"></div>
 
   <div class="input-area">
@@ -131,6 +142,13 @@ app.get('/', (req, res) => {
       send();
     }
 
+    function clearChat() {
+      if (confirm('Clear chat history?')) {
+        document.getElementById('chat').innerHTML = '';
+        history = [];
+      }
+    }
+
     document.getElementById('fileInput').addEventListener('change', async (e) => {
       const file = e.target.files[0];
       if (!file) return;
@@ -184,7 +202,7 @@ app.post('/chat', async (req, res) => {
         After your answer, add a new line with exactly: RELATED_QUESTIONS:
         Then list 3 short follow-up questions, each on a new line starting with 1. 2. 3.`
       },
-  ...req.body.messages
+ ...req.body.messages
     ];
 
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -217,9 +235,9 @@ app.post('/chat', async (req, res) => {
       answer = parts[0].trim();
       const qBlock = parts[1].trim();
       related = qBlock.split(/\\n/)
-   .map(line => line.replace(/^\\d+\\.\\s*/, '').trim())
-   .filter(line => line.length > 0)
-   .slice(0, 3);
+  .map(line => line.replace(/^\\d+\\.\\s*/, '').trim())
+  .filter(line => line.length > 0)
+  .slice(0, 3);
     }
 
     res.json({ answer, related });
