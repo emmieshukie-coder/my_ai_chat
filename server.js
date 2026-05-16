@@ -26,31 +26,35 @@ app.get('/', (req, res) => {
     header h2 { font-size: 17px; font-weight: 600; }
 
     #chat { flex: 1; overflow-y: auto; padding: 16px; background: #fff; min-height: 0; }
- .msg { margin: 12px 0; padding: 10px 14px; border-radius: 18px; max-width: 85%; word-wrap: break-word; font-size: 15px; line-height: 1.5; }
- .user { background: #e8f0fe; margin-left: auto; }
- .ai { background: #f7f7f7; margin-right: auto; }
+.msg { margin: 12px 0; padding: 10px 14px; border-radius: 18px; max-width: 85%; word-wrap: break-word; font-size: 15px; line-height: 1.5; }
+.user { background: #e8f0fe; margin-left: auto; }
+.ai { background: #f7f7f7; margin-right: auto; }
 
- .related-title { font-size: 13px; color: #666; margin: 10px 0 6px 4px; }
- .related-item {
+.related-title { font-size: 13px; color: #666; margin: 10px 0 6px 4px; }
+.related-item {
       background: #f0f0f0; border: 1px solid #ddd; border-radius: 16px;
       padding: 10px 12px; font-size: 14px; margin-bottom: 6px; cursor: pointer;
     }
- .related-item:active { background: #e0e0e0; }
+.related-item:active { background: #e0e0e0; }
 
- .input-area {
+.input-area {
       padding: 10px 12px; background: #007bff; padding-bottom: calc(10px + env(safe-area-inset-bottom));
     }
- .input-box {
+.input-box {
       display: flex; align-items: center; background: #fff; border-radius: 24px;
-      padding: 6px 8px 6px 14px; gap: 4px;
+      padding: 6px 8px 6px 14px; gap: 6px;
     }
- .input-box input { flex: 1; border: none; outline: none; font-size: 15px; }
- .icon-btn,.send-btn {
+.input-box input { flex: 1; border: none; outline: none; font-size: 15px; }
+.icon-btn {
       width: 40px; height: 40px; border: none; border-radius: 50%;
       display: flex; align-items: center; justify-content: center; cursor: pointer;
+      background: transparent; font-size: 20px; flex-shrink: 0;
     }
- .icon-btn { background: transparent; font-size: 20px; }
- .send-btn { background: #007bff; color: white; font-size: 18px; }
+.send-btn {
+      width: 48px; height: 48px; border: none; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center; cursor: pointer;
+      background: #007bff; color: white; font-size: 20px; flex-shrink: 0;
+    }
 
     #fileInput, #docInput { display: none; }
   </style>
@@ -63,7 +67,7 @@ app.get('/', (req, res) => {
     <div class="input-box">
       <input id="input" placeholder="Message" onkeydown="if(event.key==='Enter') send()">
       <button class="icon-btn" onclick="document.getElementById('docInput').click()">📎</button>
-      <button class="icon-btn" onclick="openCamera()">📷</button>
+      <button class="icon-btn" onclick="document.getElementById('fileInput').click()">📷</button>
       <input type="file" id="fileInput" accept="image/*" capture="camera">
       <input type="file" id="docInput" accept=".pdf,.txt,.doc,.docx,.csv,.json,.md">
       <button class="send-btn" onclick="send()">➤</button>
@@ -73,17 +77,12 @@ app.get('/', (req, res) => {
   <script>
     let history = [];
 
-    async function openCamera() {
-      const input = document.getElementById('fileInput');
-      input.click();
-    }
-
     async function send() {
       const input = document.getElementById('input');
       const msg = input.value.trim();
       if (!msg) return;
       addMsg(msg, 'user');
-      history.push({ role: 'user', content: msg });
+      history.push({ role: 'user', content: [{ type: 'text', text: msg }] });
       input.value = '';
       await callAI();
     }
@@ -96,8 +95,12 @@ app.get('/', (req, res) => {
           body: JSON.stringify({ messages: history })
         });
         const data = await res.json();
+        if (data.error) {
+          addMsg(data.reply, 'ai');
+          return;
+        }
         addMsg(data.answer, 'ai', data.related);
-        history.push({ role: 'assistant', content: data.answer });
+        history.push({ role: 'assistant', content: [{ type: 'text', text: data.answer }] });
       } catch (err) {
         addMsg('Error: ' + err.message, 'ai');
       }
@@ -113,7 +116,7 @@ app.get('/', (req, res) => {
       if (related && related.length > 0) {
         html += '<div class="related-title">Related questions</div>';
         related.forEach(q => {
-          const safeQ = q.replace(/'/g, "\\\\'");
+          const safeQ = q.replace(/'/g, "\\\\'").replace(/"/g, '\\\\"');
           html += '<div class="related-item" onclick="sendRelated(\\'' + safeQ + '\\')">' + q + '</div>';
         });
       }
@@ -135,7 +138,13 @@ app.get('/', (req, res) => {
       reader.onload = () => {
         const base64 = reader.result;
         addMsg('<img src="' + base64 + '">', 'user');
-        history.push({ role: 'user', content: 'Describe this image: ' + base64 });
+        history.push({
+          role: 'user',
+          content: [
+            { type: 'text', text: 'Describe this image' },
+            { type: 'image_url', image_url: { url: base64 } }
+          ]
+        });
         callAI();
       };
       reader.readAsDataURL(file);
@@ -151,7 +160,7 @@ app.get('/', (req, res) => {
       const res = await fetch('/document', { method: 'POST', body: formData });
       const data = await res.json();
       if (data.text) {
-        history.push({ role: 'user', content: 'Document: ' + data.text });
+        history.push({ role: 'user', content: [{ type: 'text', text: 'Document: ' + data.text }] });
         await callAI();
       }
       e.target.value = '';
@@ -165,17 +174,17 @@ app.get('/', (req, res) => {
 app.post('/chat', async (req, res) => {
   try {
     if (!process.env.GROQ_API_KEY) {
-      return res.json({ answer: 'GROQ_API_KEY not set', related: [] });
+      return res.json({ reply: 'GROQ_API_KEY not set', error: true });
     }
 
     const messages = [
       {
         role: 'system',
-        content: `Answer the question. Then on a new line write exactly: RELATED_QUESTIONS:
-        Then list 3 short follow-up questions, each on a new line starting with 1. 2. 3.
-        Do not add extra text after the 3rd question.`
+        content: `You are a helpful assistant. Give complete answers, not 1 word.
+        After your answer, add a new line with exactly: RELATED_QUESTIONS:
+        Then list 3 short follow-up questions, each on a new line starting with 1. 2. 3.`
       },
-    ...req.body.messages.map(m => ({ role: m.role, content: m.content }))
+   ...req.body.messages
     ];
 
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -188,7 +197,7 @@ app.post('/chat', async (req, res) => {
         model: 'meta-llama/llama-4-scout-17b-16e-instruct',
         messages: messages,
         temperature: 0.7,
-        max_tokens: 1200
+        max_tokens: 1500
       })
     });
 
@@ -203,15 +212,15 @@ app.post('/chat', async (req, res) => {
       answer = parts[0].trim();
       const qBlock = parts[1].trim();
       related = qBlock.split(/\\n/)
-     .map(line => line.replace(/^\\d+\\.\\s*/, '').trim())
-     .filter(line => line.length > 0)
-     .slice(0, 3);
+    .map(line => line.replace(/^\\d+\\.\\s*/, '').trim())
+    .filter(line => line.length > 0)
+    .slice(0, 3);
     }
 
     res.json({ answer, related });
 
   } catch (error) {
-    res.json({ answer: 'Server error: ' + error.message, related: [] });
+    res.json({ reply: 'Server error: ' + error.message, error: true });
   }
 });
 
