@@ -25,25 +25,25 @@ app.get('/', (req, res) => {
     html, body { height: 100%; overflow: hidden; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #fff; display: flex; flex-direction: column; color: #111; }
     header { padding: 14px 16px; background: #111; color: white; display: flex; align-items: center; justify-content: space-between; }
-   .tabs { display: flex; background: #111; border-top: 1px solid #333; }
-   .tab { flex: 1; padding: 10px; text-align: center; color: #aaa; cursor: pointer; font-size: 14px; }
-   .tab.active { color: #007bff; border-bottom: 2px solid #007bff; }
+  .tabs { display: flex; background: #111; border-top: 1px solid #333; }
+  .tab { flex: 1; padding: 10px; text-align: center; color: #aaa; cursor: pointer; font-size: 14px; }
+  .tab.active { color: #007bff; border-bottom: 2px solid #007bff; }
     #chat, #jobs, #profile, #auth { flex: 1; overflow-y: auto; padding: 16px; display: none; }
     #chat.active, #jobs.active, #profile.active, #auth.active { display: block; }
-   .msg { margin: 12px 0; padding: 10px 14px; border-radius: 18px; max-width: 85%; word-wrap: break-word; font-size: 15px; line-height: 1.5; }
-   .user { background: #e8f0fe; margin-left: auto; }
-   .ai { background: #f7f7f7; margin-right: auto; }
-   .job-card,.cv-card { background: #f7f7f7; padding: 12px; border-radius: 12px; margin-bottom: 10px; }
-   .apply-btn,.pay-btn,.auth-btn,.save-btn { margin-top: 8px; padding: 10px; background: #007bff; color: white; border: none; border-radius: 8px; width: 100%; cursor: pointer; font-size: 15px; }
-   .pay-btn { background: #28a745; }
-   .auth-btn { background: #111; }
-   .save-btn { background: #6c757d; }
-   .input-area { padding: 10px 12px; background: #007bff; }
-   .input-box { display: flex; align-items: center; background: #fff; border-radius: 24px; padding: 6px 8px; gap: 6px; }
-   .input-box input { flex: 1; border: none; outline: none; font-size: 15px; }
-   .send-btn { width: 48px; height: 48px; border: none; border-radius: 50%; background: #007bff; color: white; font-size: 22px; }
+  .msg { margin: 12px 0; padding: 10px 14px; border-radius: 18px; max-width: 85%; word-wrap: break-word; font-size: 15px; line-height: 1.5; }
+  .user { background: #e8f0fe; margin-left: auto; }
+  .ai { background: #f7f7f7; margin-right: auto; }
+  .job-card,.cv-card { background: #f7f7f7; padding: 12px; border-radius: 12px; margin-bottom: 10px; }
+  .apply-btn,.pay-btn,.auth-btn,.save-btn { margin-top: 8px; padding: 10px; background: #007bff; color: white; border: none; border-radius: 8px; width: 100%; cursor: pointer; font-size: 15px; }
+  .pay-btn { background: #28a745; }
+  .auth-btn { background: #111; }
+  .save-btn { background: #6c757d; }
+  .input-area { padding: 10px 12px; background: #007bff; }
+  .input-box { display: flex; align-items: center; background: #fff; border-radius: 24px; padding: 6px 8px; gap: 6px; }
+  .input-box input { flex: 1; border: none; outline: none; font-size: 15px; }
+  .send-btn { width: 48px; height: 48px; border: none; border-radius: 50%; background: #007bff; color: white; font-size: 22px; }
     input[type="email"], input[type="password"] { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; }
-   .loading { text-align: center; color: #666; padding: 20px; }
+  .loading { text-align: center; color: #666; padding: 20px; }
   </style>
 </head>
 <body>
