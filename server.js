@@ -8,7 +8,6 @@ const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 25 
 
 app.use(express.json({ limit: '10mb' }));
 
-// Serve the chat page
 app.get('/', (req, res) => {
   res.send(`
 <!DOCTYPE html>
@@ -21,117 +20,157 @@ app.get('/', (req, res) => {
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #f5f5f5;
+      background: #fff;
       height: 100vh;
       display: flex;
       flex-direction: column;
+      color: #111;
     }
     header {
       padding: 12px 16px;
-      background: #007bff;
+      background: #111;
       color: white;
       display: flex;
-      justify-content: space-between;
       align-items: center;
+      gap: 12px;
       flex-shrink: 0;
     }
-    header h2 { font-size: 18px; font-weight: 600; }
-    header button {
-      background: rgba(255,255,255,0.2);
-      border: none;
-      color: white;
-      padding: 6px 12px;
-      border-radius: 12px;
-      font-size: 13px;
-      cursor: pointer;
+    header.back { font-size: 24px; cursor: pointer; }
+    header.logo {
+      width: 28px;
+      height: 28px;
+      background: linear-gradient(135deg, #a855f7, #ec4899, #f97316);
+      border-radius: 50%;
     }
+    header h2 {
+      font-size: 17px;
+      font-weight: 600;
+      flex: 1;
+    }
+    header.menu { font-size: 22px; cursor: pointer; opacity: 0.8; }
     #chat {
       flex: 1;
       overflow-y: auto;
-      padding: 12px;
-      background: white;
+      padding: 16px;
+      background: #fff;
     }
- .msg {
-      margin: 8px 0;
+   .msg {
+      margin: 12px 0;
       padding: 10px 14px;
       border-radius: 18px;
       max-width: 85%;
       word-wrap: break-word;
       font-size: 15px;
-      line-height: 1.4;
+      line-height: 1.5;
     }
- .user {
-      background: #007bff;
-      color: white;
+   .user {
+      background: #f0f0f0;
+      color: #111;
       margin-left: auto;
     }
- .ai {
-      background: #e9ecef;
-      color: #333;
+   .ai {
+      background: #f7f7f7;
+      color: #111;
       margin-right: auto;
     }
- .error {
+   .error {
       background: #ffe6e6;
       color: #d00;
       margin-right: auto;
     }
-.msg audio { width: 100%; margin-top: 6px; }
-.input-area {
+   .msg img { max-width: 100%; border-radius: 12px; margin-top: 6px; }
+   .msg audio { width: 100%; margin-top: 6px; }
+
+   .input-area {
       display: flex;
       gap: 8px;
-      padding: 12px;
-      background: white;
-      border-top: 1px solid #ddd;
+      padding: 10px 12px;
+      background: #fff;
+      border-top: 1px solid #e5e5e5;
       flex-shrink: 0;
       align-items: center;
     }
-    input {
+   .input-box {
       flex: 1;
-      padding: 12px;
-      font-size: 16px;
-      border: 1px solid #ddd;
-      border-radius: 20px;
-      outline: none;
+      display: flex;
+      align-items: center;
+      background: #f5f5f5;
+      border-radius: 24px;
+      padding: 8px 12px;
+      gap: 8px;
     }
-    input:focus { border-color: #007bff; }
-    button {
-      padding: 12px 20px;
+   .input-box input {
+      flex: 1;
+      border: none;
+      background: transparent;
       font-size: 15px;
-      background: #007bff;
+      outline: none;
+      color: #111;
+    }
+   .input-box input::placeholder { color: #888; }
+
+   .icon-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: none;
+      background: transparent;
+      font-size: 22px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #555;
+    }
+   .icon-btn:active { background: #eee; }
+
+   .mic-btn {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      border: none;
+      background: #25d366;
+      color: white;
+      font-size: 22px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+   .mic-btn.recording { background: #ff4444; }
+
+   .send-btn {
+      padding: 10px 16px;
+      background: #111;
       color: white;
       border: none;
       border-radius: 20px;
-      cursor: pointer;
+      font-size: 14px;
       font-weight: 600;
-      flex-shrink: 0;
+      cursor: pointer;
     }
-    button.icon {
-      padding: 10px;
-      width: 44px;
-      height: 44px;
-      border-radius: 50%;
-      background: #e9ecef;
-      color: #333;
-      flex-shrink: 0;
-    }
-    button.recording { background: #ff4444; color: white; }
-    button:active { background: #0056b3; }
-    button:disabled { background: #ccc; }
     #fileInput { display: none; }
   </style>
 </head>
 <body>
   <header>
-    <h2>🤖 My AI Chat</h2>
-    <button onclick="clearChat()">Clear</button>
+    <div class="back">←</div>
+    <div class="logo"></div>
+    <h2>My AI Chat</h2>
+    <div class="menu">⋮</div>
   </header>
+
   <div id="chat"></div>
+
   <div class="input-area">
-    <input type="file" id="fileInput" accept="image/*;capture=camera">
-    <button class="icon" onclick="document.getElementById('fileInput').click()">📷</button>
-    <button class="icon" id="recordBtn">🎤</button>
-    <input id="input" placeholder="Type a message..." onkeydown="if(event.key==='Enter') send()">
-    <button id="sendBtn" onclick="send()">Send</button>
+    <button class="icon-btn" onclick="clearChat()">🗑️</button>
+    <div class="input-box">
+      <button class="icon-btn" onclick="alert('Attach coming soon')">📎</button>
+      <input id="input" placeholder="Message" onkeydown="if(event.key==='Enter') send()">
+      <button class="icon-btn" onclick="document.getElementById('fileInput').click()">📷</button>
+      <input type="file" id="fileInput" accept="image/*;capture=camera">
+    </div>
+    <button class="mic-btn" id="recordBtn">🎤</button>
   </div>
 
   <script>
@@ -142,17 +181,13 @@ app.get('/', (req, res) => {
 
     async function send() {
       const input = document.getElementById('input');
-      const btn = document.getElementById('sendBtn');
       const msg = input.value.trim();
       if (!msg) return;
 
-      addMsg('You', msg, 'user');
-      history.push({ role: 'user', content: msg });
+      addMsg(msg, 'user');
+      history.push({ role: 'user', content: [{ type: 'text', text: msg }] });
       input.value = '';
-      btn.disabled = true;
-
       await callAI();
-      btn.disabled = false;
     }
 
     async function callAI() {
@@ -164,18 +199,18 @@ app.get('/', (req, res) => {
         });
 
         const data = await res.json();
-        addMsg('AI', data.reply || 'No response', data.error? 'error' : 'ai');
-        if (!data.error) history.push({ role: 'assistant', content: data.reply });
+        addMsg(data.reply || 'No response', data.error? 'error' : 'ai');
+        if (!data.error) history.push({ role: 'assistant', content: [{ type: 'text', text: data.reply }] });
       } catch (err) {
-        addMsg('AI', 'Network error: ' + err.message, 'error');
+        addMsg('Network error: ' + err.message, 'error');
       }
     }
 
-    function addMsg(who, text, cls) {
+    function addMsg(text, cls) {
       const chat = document.getElementById('chat');
       const div = document.createElement('div');
       div.className = 'msg ' + cls;
-      div.innerHTML = '<b>' + who + ':</b> ' + text;
+      div.innerHTML = text;
       chat.appendChild(div);
       chat.scrollTop = chat.scrollHeight;
     }
@@ -190,14 +225,20 @@ app.get('/', (req, res) => {
     document.getElementById('fileInput').addEventListener('change', async (e) => {
       const file = e.target.files[0];
       if (!file) return;
-      const formData = new FormData();
-      formData.append('image', file);
-
-      addMsg('You', '📷 Photo sent', 'user');
-      history.push({ role: 'user', content: '[Image uploaded]' });
-
-      await fetch('/upload', { method: 'POST', body: formData });
-      await callAI();
+      const reader = new FileReader();
+      reader.onload = () => {
+        const base64 = reader.result;
+        addMsg('<img src="' + base64 + '">', 'user');
+        history.push({
+          role: 'user',
+          content: [
+            { type: 'text', text: 'What do you see in this image?' },
+            { type: 'image_url', image_url: { url: base64 } }
+          ]
+        });
+        callAI();
+      };
+      reader.readAsDataURL(file);
       e.target.value = '';
     });
 
@@ -211,18 +252,15 @@ app.get('/', (req, res) => {
           const blob = new Blob(audioChunks, { type: 'audio/webm' });
           const formData = new FormData();
           formData.append('audio', blob, 'voice.webm');
-
-          addMsg('You', '<audio controls src="' + URL.createObjectURL(blob) + '"></audio>', 'user');
-
+          addMsg('<audio controls src="' + URL.createObjectURL(blob) + '"></audio>', 'user');
           const res = await fetch('/transcribe', { method: 'POST', body: formData });
           const data = await res.json();
-
           if (data.text) {
-            addMsg('You', data.text, 'user');
-            history.push({ role: 'user', content: data.text });
+            addMsg(data.text, 'user');
+            history.push({ role: 'user', content: [{ type: 'text', text: data.text }] });
             await callAI();
           } else {
-            addMsg('AI', 'Transcription failed: ' + data.error, 'error');
+            addMsg('Transcription failed: ' + data.error, 'error');
           }
         };
         mediaRecorder.start();
@@ -240,7 +278,6 @@ app.get('/', (req, res) => {
   `);
 });
 
-// Handle chat requests
 app.post('/chat', async (req, res) => {
   try {
     if (!process.env.GROQ_API_KEY) {
@@ -254,9 +291,10 @@ app.post('/chat', async (req, res) => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'llama-3.1-8b-instant',
-        messages: req.body.messages || [{ role: 'user', content: req.body.message }],
-        temperature: 0.7
+        model: 'meta-llama/llama-4-scout-17b-16e-instruct',
+        messages: req.body.messages || [],
+        temperature: 0.7,
+        max_tokens: 1024
       })
     });
 
@@ -274,7 +312,6 @@ app.post('/chat', async (req, res) => {
   }
 });
 
-// Handle voice transcription
 app.post('/transcribe', upload.single('audio'), async (req, res) => {
   try {
     if (!process.env.GROQ_API_KEY) {
@@ -304,7 +341,6 @@ app.post('/transcribe', upload.single('audio'), async (req, res) => {
   }
 });
 
-// Handle image upload placeholder
 app.post('/upload', upload.single('image'), (req, res) => {
   res.json({ ok: true });
 });
