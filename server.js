@@ -53,7 +53,7 @@ app.get('/', (req, res) => {
       background: #fff;
       min-height: 0;
     }
-  .msg {
+ .msg {
       margin: 12px 0;
       padding: 10px 14px;
       border-radius: 18px;
@@ -62,32 +62,43 @@ app.get('/', (req, res) => {
       font-size: 15px;
       line-height: 1.5;
     }
-  .user {
+ .user {
       background: #f0f0f0;
       color: #111;
       margin-left: auto;
     }
-  .ai {
+ .ai {
       background: #f7f7f7;
       color: #111;
       margin-right: auto;
     }
-  .error {
+ .error {
       background: #ffe6e6;
       color: #d00;
       margin-right: auto;
     }
-  .msg img { max-width: 100%; border-radius: 12px; margin-top: 6px; }
-  .msg audio { width: 100%; margin-top: 6px; }
+ .msg img { max-width: 100%; border-radius: 12px; margin-top: 6px; }
+ .msg audio { width: 100%; margin-top: 6px; }
+ .file-msg {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+    }
+ .file-msg span {
+      background: #e0e0e0;
+      padding: 6px 10px;
+      border-radius: 12px;
+    }
 
-  .input-area {
+ .input-area {
       padding: 10px 12px;
       background: #fff;
       border-top: 1px solid #e5e5e5;
       flex-shrink: 0;
       padding-bottom: calc(10px + env(safe-area-inset-bottom));
     }
-  .input-box {
+ .input-box {
       display: flex;
       align-items: center;
       background: #f5f5f5;
@@ -95,7 +106,7 @@ app.get('/', (req, res) => {
       padding: 6px 8px 6px 14px;
       gap: 4px;
     }
-  .input-box input {
+ .input-box input {
       flex: 1;
       border: none;
       background: transparent;
@@ -104,15 +115,15 @@ app.get('/', (req, res) => {
       color: #111;
       min-width: 0;
     }
-  .input-box input::placeholder { color: #888; }
+ .input-box input::placeholder { color: #888; }
 
-  .icon-group {
+ .icon-group {
       display: flex;
       align-items: center;
       gap: 2px;
    }
 
-  .icon-btn {
+ .icon-btn {
       width: 36px;
       height: 36px;
       border-radius: 50%;
@@ -126,9 +137,9 @@ app.get('/', (req, res) => {
       color: #555;
       flex-shrink: 0;
     }
-  .icon-btn:active { background: #e0e0e0; }
+ .icon-btn:active { background: #e0e0e0; }
 
-  .mic-btn {
+ .mic-btn {
       width: 40px;
       height: 40px;
       border-radius: 50%;
@@ -142,8 +153,8 @@ app.get('/', (req, res) => {
       justify-content: center;
       flex-shrink: 0;
     }
-  .mic-btn.recording { background: #ff4444; }
-    #fileInput { display: none; }
+ .mic-btn.recording { background: #ff4444; }
+    #fileInput, #docInput { display: none; }
   </style>
 </head>
 <body>
@@ -159,9 +170,10 @@ app.get('/', (req, res) => {
     <div class="input-box">
       <input id="input" placeholder="Message" onkeydown="if(event.key==='Enter') send()">
       <div class="icon-group">
-        <button class="icon-btn" onclick="document.getElementById('fileInput').click()">📎</button>
+        <button class="icon-btn" onclick="document.getElementById('docInput').click()">📎</button>
         <button class="icon-btn" onclick="document.getElementById('fileInput').click()">📷</button>
         <input type="file" id="fileInput" accept="image/*;capture=camera">
+        <input type="file" id="docInput" accept=".pdf,.txt,.doc,.docx,.csv,.json,.md">
         <button class="mic-btn" id="recordBtn">🎤</button>
       </div>
     </div>
@@ -216,6 +228,7 @@ app.get('/', (req, res) => {
       }
     }
 
+    // Image upload
     document.getElementById('fileInput').addEventListener('change', async (e) => {
       const file = e.target.files[0];
       if (!file) return;
@@ -233,6 +246,31 @@ app.get('/', (req, res) => {
         callAI();
       };
       reader.readAsDataURL(file);
+      e.target.value = '';
+    });
+
+    // Document upload
+    document.getElementById('docInput').addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      addMsg('<div class="file-msg">📄 <span>' + file.name + '</span></div>', 'user');
+
+      const formData = new FormData();
+      formData.append('document', file);
+
+      const res = await fetch('/document', { method: 'POST', body: formData });
+      const data = await res.json();
+
+      if (data.text) {
+        history.push({
+          role: 'user',
+          content: [{ type: 'text', text: 'Document: ' + file.name + '\\n\\nContent:\\n' + data.text }]
+        });
+        await callAI();
+      } else {
+        addMsg('Failed to read document: ' + data.error, 'error');
+      }
       e.target.value = '';
     });
 
@@ -335,8 +373,26 @@ app.post('/transcribe', upload.single('audio'), async (req, res) => {
   }
 });
 
-app.post('/upload', upload.single('image'), (req, res) => {
-  res.json({ ok: true });
+// Document upload handler
+app.post('/document', upload.single('document'), async (req, res) => {
+  try {
+    const file = req.file;
+    let text = '';
+
+    if (file.mimetype === 'text/plain' || file.originalname.endsWith('.txt') || file.originalname.endsWith('.md')) {
+      text = file.buffer.toString('utf-8');
+    } else if (file.mimetype === 'application/json') {
+      text = file.buffer.toString('utf-8');
+    } else if (file.mimetype === 'text/csv') {
+      text = file.buffer.toString('utf-8');
+    } else {
+      text = '[File uploaded: ' + file.originalname + ']. For PDFs and DOCX, text extraction needs extra libraries. For now, I can see the file name and size: ' + (file.size / 1024).toFixed(1) + ' KB.';
+    }
+
+    res.json({ text });
+  } catch (error) {
+    res.json({ error: error.message });
+  }
 });
 
 app.listen(PORT, () => {
