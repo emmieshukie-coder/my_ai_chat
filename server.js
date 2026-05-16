@@ -14,20 +14,23 @@ app.get('/', (req, res) => {
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>My AI Chat</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      height: 100%;
+      overflow: hidden;
+    }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       background: #fff;
-      height: 100vh;
       display: flex;
       flex-direction: column;
       color: #111;
     }
     header {
-      padding: 12px 16px;
+      padding: 14px 16px;
       background: #111;
       color: white;
       display: flex;
@@ -35,26 +38,22 @@ app.get('/', (req, res) => {
       gap: 12px;
       flex-shrink: 0;
     }
-    header.back { font-size: 24px; cursor: pointer; }
-    header.logo {
-      width: 28px;
-      height: 28px;
-      background: linear-gradient(135deg, #a855f7, #ec4899, #f97316);
-      border-radius: 50%;
-    }
+    header.back { font-size: 22px; }
     header h2 {
       font-size: 17px;
       font-weight: 600;
       flex: 1;
     }
-    header.menu { font-size: 22px; cursor: pointer; opacity: 0.8; }
+    header.menu { font-size: 22px; opacity: 0.8; }
+
     #chat {
       flex: 1;
       overflow-y: auto;
       padding: 16px;
       background: #fff;
+      min-height: 0;
     }
-   .msg {
+  .msg {
       margin: 12px 0;
       padding: 10px 14px;
       border-radius: 18px;
@@ -63,114 +62,109 @@ app.get('/', (req, res) => {
       font-size: 15px;
       line-height: 1.5;
     }
-   .user {
+  .user {
       background: #f0f0f0;
       color: #111;
       margin-left: auto;
     }
-   .ai {
+  .ai {
       background: #f7f7f7;
       color: #111;
       margin-right: auto;
     }
-   .error {
+  .error {
       background: #ffe6e6;
       color: #d00;
       margin-right: auto;
     }
-   .msg img { max-width: 100%; border-radius: 12px; margin-top: 6px; }
-   .msg audio { width: 100%; margin-top: 6px; }
+  .msg img { max-width: 100%; border-radius: 12px; margin-top: 6px; }
+  .msg audio { width: 100%; margin-top: 6px; }
 
-   .input-area {
-      display: flex;
-      gap: 8px;
+  .input-area {
       padding: 10px 12px;
       background: #fff;
       border-top: 1px solid #e5e5e5;
       flex-shrink: 0;
-      align-items: center;
+      padding-bottom: calc(10px + env(safe-area-inset-bottom));
     }
-   .input-box {
-      flex: 1;
+  .input-box {
       display: flex;
       align-items: center;
       background: #f5f5f5;
       border-radius: 24px;
-      padding: 8px 12px;
-      gap: 8px;
+      padding: 6px 8px 6px 14px;
+      gap: 4px;
     }
-   .input-box input {
+  .input-box input {
       flex: 1;
       border: none;
       background: transparent;
       font-size: 15px;
       outline: none;
       color: #111;
+      min-width: 0;
     }
-   .input-box input::placeholder { color: #888; }
+  .input-box input::placeholder { color: #888; }
 
-   .icon-btn {
-      width: 40px;
-      height: 40px;
+  .icon-group {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+   }
+
+  .icon-btn {
+      width: 36px;
+      height: 36px;
       border-radius: 50%;
       border: none;
       background: transparent;
-      font-size: 22px;
+      font-size: 20px;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
       color: #555;
+      flex-shrink: 0;
     }
-   .icon-btn:active { background: #eee; }
+  .icon-btn:active { background: #e0e0e0; }
 
-   .mic-btn {
-      width: 48px;
-      height: 48px;
+  .mic-btn {
+      width: 40px;
+      height: 40px;
       border-radius: 50%;
       border: none;
       background: #25d366;
       color: white;
-      font-size: 22px;
+      font-size: 20px;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
+      flex-shrink: 0;
     }
-   .mic-btn.recording { background: #ff4444; }
-
-   .send-btn {
-      padding: 10px 16px;
-      background: #111;
-      color: white;
-      border: none;
-      border-radius: 20px;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-    }
+  .mic-btn.recording { background: #ff4444; }
     #fileInput { display: none; }
   </style>
 </head>
 <body>
   <header>
     <div class="back">←</div>
-    <div class="logo"></div>
     <h2>My AI Chat</h2>
-    <div class="menu">⋮</div>
+    <div class="menu" onclick="clearChat()">⋮</div>
   </header>
 
   <div id="chat"></div>
 
   <div class="input-area">
-    <button class="icon-btn" onclick="clearChat()">🗑️</button>
     <div class="input-box">
-      <button class="icon-btn" onclick="alert('Attach coming soon')">📎</button>
       <input id="input" placeholder="Message" onkeydown="if(event.key==='Enter') send()">
-      <button class="icon-btn" onclick="document.getElementById('fileInput').click()">📷</button>
-      <input type="file" id="fileInput" accept="image/*;capture=camera">
+      <div class="icon-group">
+        <button class="icon-btn" onclick="document.getElementById('fileInput').click()">📎</button>
+        <button class="icon-btn" onclick="document.getElementById('fileInput').click()">📷</button>
+        <input type="file" id="fileInput" accept="image/*;capture=camera">
+        <button class="mic-btn" id="recordBtn">🎤</button>
+      </div>
     </div>
-    <button class="mic-btn" id="recordBtn">🎤</button>
   </div>
 
   <script>
