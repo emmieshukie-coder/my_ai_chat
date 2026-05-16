@@ -78,7 +78,6 @@ app.get('/', (req, res) => {
       margin-right: auto;
     }
 .msg img { max-width: 100%; border-radius: 12px; margin-top: 6px; }
-.msg audio { width: 100%; margin-top: 6px; }
 .file-msg {
       display: flex;
       align-items: center;
@@ -172,7 +171,7 @@ app.get('/', (req, res) => {
       <div class="icon-group">
         <button class="icon-btn" onclick="document.getElementById('docInput').click()">📎</button>
         <button class="icon-btn" onclick="document.getElementById('fileInput').click()">📷</button>
-        <input type="file" id="fileInput" accept="image/*;capture=camera">
+        <input type="file" id="fileInput" accept="image/*" capture="environment">
         <input type="file" id="docInput" accept=".pdf,.txt,.doc,.docx,.csv,.json,.md">
         <button class="send-btn" onclick="send()">➤</button>
       </div>
