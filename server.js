@@ -9,7 +9,7 @@ app.use(express.json({ limit: '10mb' }));
 let users = {};
 let userCVs = {}; // {email: [{title, content, date}]}
 
-// Hardcoded Adzuna keys - you can move these to Render env vars later
+// Hardcoded Adzuna keys - move to Render env vars later
 const ADZUNA_APP_ID = 'cd82aca8';
 const ADZUNA_APP_KEY = '39952eab2d2de243ff1ceffc7dc36478';
 
@@ -27,29 +27,29 @@ app.get('/', (req, res) => {
     html, body { height: 100%; overflow: hidden; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #fff; display: flex; flex-direction: column; color: #111; }
     header { padding: 14px 16px; background: #111; color: white; display: flex; align-items: center; justify-content: space-between; }
- .tabs { display: flex; background: #111; border-top: 1px solid #333; }
- .tab { flex: 1; padding: 10px; text-align: center; color: #aaa; cursor: pointer; font-size: 14px; }
- .tab.active { color: #007bff; border-bottom: 2px solid #007bff; }
+   .tabs { display: flex; background: #111; border-top: 1px solid #333; }
+   .tab { flex: 1; padding: 10px; text-align: center; color: #aaa; cursor: pointer; font-size: 14px; }
+   .tab.active { color: #007bff; border-bottom: 2px solid #007bff; }
     #chat, #jobs, #profile, #auth { flex: 1; overflow-y: auto; padding: 16px; display: none; }
     #chat.active, #jobs.active, #profile.active, #auth.active { display: block; }
- .msg { margin: 12px 0; padding: 10px 14px; border-radius: 18px; max-width: 85%; word-wrap: break-word; font-size: 15px; line-height: 1.5; }
- .user { background: #e8f0fe; margin-left: auto; }
- .ai { background: #f7f7f7; margin-right: auto; }
- .job-card,.cv-card { background: #f7f7f7; padding: 12px; border-radius: 12px; margin-bottom: 10px; }
- .job-card h4,.cv-card h4 { margin-bottom: 4px; }
- .job-card p,.cv-card p { font-size: 13px; color: #555; }
- .apply-btn,.pay-btn,.auth-btn,.save-btn { margin-top: 8px; padding: 10px; background: #007bff; color: white; border: none; border-radius: 8px; width: 100%; cursor: pointer; font-size: 15px; }
- .pay-btn { background: #28a745; }
- .auth-btn { background: #111; }
- .save-btn { background: #6c757d; }
- .input-area { padding: 10px 12px; background: #007bff; padding-bottom: calc(10px + env(safe-area-inset-bottom)); }
- .input-box { display: flex; align-items: center; background: #fff; border-radius: 24px; padding: 6px 8px; gap: 6px; }
- .input-box input { flex: 1; border: none; outline: none; font-size: 15px; min-width: 0; }
- .send-btn { width: 48px; height: 48px; border: none; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; background: #007bff; color: white; font-size: 22px; flex-shrink: 0; }
+   .msg { margin: 12px 0; padding: 10px 14px; border-radius: 18px; max-width: 85%; word-wrap: break-word; font-size: 15px; line-height: 1.5; }
+   .user { background: #e8f0fe; margin-left: auto; }
+   .ai { background: #f7f7f7; margin-right: auto; }
+   .job-card,.cv-card { background: #f7f7f7; padding: 12px; border-radius: 12px; margin-bottom: 10px; }
+   .job-card h4,.cv-card h4 { margin-bottom: 4px; }
+   .job-card p,.cv-card p { font-size: 13px; color: #555; }
+   .apply-btn,.pay-btn,.auth-btn,.save-btn { margin-top: 8px; padding: 10px; background: #007bff; color: white; border: none; border-radius: 8px; width: 100%; cursor: pointer; font-size: 15px; }
+   .pay-btn { background: #28a745; }
+   .auth-btn { background: #111; }
+   .save-btn { background: #6c757d; }
+   .input-area { padding: 10px 12px; background: #007bff; padding-bottom: calc(10px + env(safe-area-inset-bottom)); }
+   .input-box { display: flex; align-items: center; background: #fff; border-radius: 24px; padding: 6px 8px; gap: 6px; }
+   .input-box input { flex: 1; border: none; outline: none; font-size: 15px; min-width: 0; }
+   .send-btn { width: 48px; height: 48px; border: none; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; background: #007bff; color: white; font-size: 22px; flex-shrink: 0; }
     input[type="email"], input[type="password"] { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; }
- .loading { text-align: center; color: #666; padding: 20px; }
- .cv-actions { display: flex; gap: 8px; margin-top: 8px; }
- .cv-actions button { flex: 1; padding: 6px; font-size: 13px; }
+   .loading { text-align: center; color: #666; padding: 20px; }
+   .cv-actions { display: flex; gap: 8px; margin-top: 8px; }
+   .cv-actions button { flex: 1; padding: 6px; font-size: 13px; }
   </style>
 </head>
 <body>
@@ -270,8 +270,8 @@ app.get('/', (req, res) => {
       if (related && related.length > 0) {
         html += '<div style="margin-top:10px; font-size:13px; color:#666;">Related:</div>';
         related.forEach(q => {
-          const safeQ = q.replace(/'/g, "\\\\'");
-          html += '<div style="background:#f0f0f0; padding:8px; margin-top:5px; border-radius:8px; cursor:pointer;" onclick="askAI(\\'' + safeQ + '\\')">' + q + '</div>';
+          const safeQ = q.replace(/'/g, "\\'");
+          html += `<div style="background:#f0f0f0; padding:8px; margin-top:5px; border-radius:8px; cursor:pointer;" onclick="askAI('${safeQ}')">${q}</div>`;
         });
       }
       div.innerHTML = html;
@@ -385,7 +385,7 @@ Focus on jobs in Uganda, UAE, Canada, UK, Saudi Arabia.
 Give practical, short answers.
 ALWAYS end with RELATED_QUESTIONS: and 3 follow-up questions starting 1. 2. 3.`
       },
-...req.body.messages
+     ...req.body.messages
     ];
 
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -411,10 +411,10 @@ ALWAYS end with RELATED_QUESTIONS: and 3 follow-up questions starting 1. 2. 3.`
     if (reply.includes('RELATED_QUESTIONS:')) {
       const parts = reply.split('RELATED_QUESTIONS:');
       answer = parts[0].trim();
-      related = parts[1].trim().split(/\\n/)
-  .map(line => line.replace(/^\\d+\\.\\s*/, '').trim())
-  .filter(line => line.length > 0)
-  .slice(0, 3);
+      related = parts[1].trim().split(/\n/)
+       .map(line => line.replace(/^\d+\.\s*/, '').trim())
+       .filter(line => line.length > 0)
+       .slice(0, 3);
     }
 
     res.json({ answer, related, error: false });
