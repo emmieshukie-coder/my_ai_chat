@@ -18,139 +18,64 @@ app.get('/', (req, res) => {
   <title>My AI Chat</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body {
-      height: 100%;
-      overflow: hidden;
-    }
+    html, body { height: 100%; overflow: hidden; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #fff;
-      display: flex;
-      flex-direction: column;
-      color: #111;
+      background: #fff; display: flex; flex-direction: column; color: #111;
     }
     header {
-      padding: 14px 16px;
-      background: #111;
-      color: white;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      flex-shrink: 0;
+      padding: 14px 16px; background: #111; color: white; display: flex;
+      align-items: center; gap: 12px; flex-shrink: 0;
     }
     header.back { font-size: 22px; }
-    header h2 {
-      font-size: 17px;
-      font-weight: 600;
-      flex: 1;
-    }
+    header h2 { font-size: 17px; font-weight: 600; flex: 1; }
     header.menu { font-size: 22px; opacity: 0.8; }
 
     #chat {
-      flex: 1;
-      overflow-y: auto;
-      padding: 16px;
-      background: #fff;
-      min-height: 0;
+      flex: 1; overflow-y: auto; padding: 16px; background: #fff; min-height: 0;
     }
 .msg {
-      margin: 12px 0;
-      padding: 10px 14px;
-      border-radius: 18px;
-      max-width: 85%;
-      word-wrap: break-word;
-      font-size: 15px;
-      line-height: 1.5;
+      margin: 12px 0; padding: 10px 14px; border-radius: 18px; max-width: 85%;
+      word-wrap: break-word; font-size: 15px; line-height: 1.5;
     }
-.user {
-      background: #e8f0fe;
-      color: #111;
-      margin-left: auto;
-    }
-.ai {
-      background: #f7f7f7;
-      color: #111;
-      margin-right: auto;
-    }
-.error {
-      background: #ffe6e6;
-      color: #d00;
-      margin-right: auto;
-    }
+.user { background: #e8f0fe; color: #111; margin-left: auto; }
+.ai { background: #f7f7f7; color: #111; margin-right: auto; }
+.error { background: #ffe6e6; color: #d00; margin-right: auto; }
 .msg img { max-width: 100%; border-radius: 12px; margin-top: 6px; }
 .file-msg {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 14px;
+      display: flex; align-items: center; gap: 8px; font-size: 14px;
     }
 .file-msg span {
-      background: #e0e0e0;
-      padding: 6px 10px;
-      border-radius: 12px;
+      background: #e0e0e0; padding: 6px 10px; border-radius: 12px;
     }
 
 .input-area {
-      padding: 10px 12px;
-      background: #007bff;
-      border-top: 1px solid #0056b3;
-      flex-shrink: 0;
-      padding-bottom: calc(10px + env(safe-area-inset-bottom));
+      padding: 10px 12px; background: #007bff; border-top: 1px solid #0056b3;
+      flex-shrink: 0; padding-bottom: calc(10px + env(safe-area-inset-bottom));
     }
 .input-box {
-      display: flex;
-      align-items: center;
-      background: #fff;
-      border-radius: 24px;
-      padding: 6px 8px 6px 14px;
-      gap: 4px;
+      display: flex; align-items: center; background: #fff; border-radius: 24px;
+      padding: 6px 8px 6px 14px; gap: 4px;
     }
 .input-box input {
-      flex: 1;
-      border: none;
-      background: transparent;
-      font-size: 15px;
-      outline: none;
-      color: #111;
-      min-width: 0;
+      flex: 1; border: none; background: transparent; font-size: 15px;
+      outline: none; color: #111; min-width: 0;
     }
 .input-box input::placeholder { color: #888; }
 
-.icon-group {
-      display: flex;
-      align-items: center;
-      gap: 2px;
-   }
+.icon-group { display: flex; align-items: center; gap: 2px; }
 
 .icon-btn {
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      border: none;
-      background: transparent;
-      font-size: 20px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #555;
-      flex-shrink: 0;
+      width: 36px; height: 36px; border-radius: 50%; border: none; background: transparent;
+      font-size: 20px; cursor: pointer; display: flex; align-items: center;
+      justify-content: center; color: #555; flex-shrink: 0;
     }
 .icon-btn:active { background: #e0e0e0; }
 
 .send-btn {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      border: none;
-      background: #007bff;
-      color: white;
-      font-size: 18px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
+      width: 40px; height: 40px; border-radius: 50%; border: none; background: #007bff;
+      color: white; font-size: 18px; cursor: pointer; display: flex;
+      align-items: center; justify-content: center; flex-shrink: 0;
     }
 .send-btn:active { background: #0056b3; }
     #fileInput, #docInput { display: none; }
@@ -171,7 +96,7 @@ app.get('/', (req, res) => {
       <div class="icon-group">
         <button class="icon-btn" onclick="document.getElementById('docInput').click()">📎</button>
         <button class="icon-btn" onclick="document.getElementById('fileInput').click()">📷</button>
-        <input type="file" id="fileInput" accept="image/*" capture="environment">
+        <input type="file" id="fileInput" accept="image/*" capture="camera">
         <input type="file" id="docInput" accept=".pdf,.txt,.doc,.docx,.csv,.json,.md">
         <button class="send-btn" onclick="send()">➤</button>
       </div>
