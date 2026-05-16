@@ -1,6 +1,5 @@
 import express from 'express';
 import multer from 'multer';
-import FormData from 'form-data';
 
 const app = express();
 const PORT = process.env.PORT || 10000;
@@ -24,92 +23,69 @@ app.get('/', (req, res) => {
       background: #fff; display: flex; flex-direction: column; color: #111;
     }
     header {
-      padding: 14px 16px; background: #111; color: white; display: flex;
-      align-items: center; gap: 12px; flex-shrink: 0;
+      padding: 14px 16px; background: #111; color: white;
+      display: flex; align-items: center; justify-content: space-between;
     }
-    header.back { font-size: 22px; }
-    header h2 { font-size: 17px; font-weight: 600; flex: 1; }
-    header.menu { font-size: 22px; opacity: 0.8; }
+    header h2 { font-size: 17px; font-weight: 600; }
+   .clear-btn {
+      background: transparent; border: 1px solid #555; color: white;
+      padding: 6px 10px; border-radius: 8px; font-size: 13px; cursor: pointer;
+    }
+   .clear-btn:active { background: #333; }
 
-    #chat {
-      flex: 1; overflow-y: auto; padding: 16px; background: #fff; min-height: 0;
-    }
-.msg {
-      margin: 12px 0; padding: 10px 14px; border-radius: 18px; max-width: 85%;
-      word-wrap: break-word; font-size: 15px; line-height: 1.5;
-    }
-.user { background: #e8f0fe; color: #111; margin-left: auto; }
-.ai { background: #f7f7f7; color: #111; margin-right: auto; }
-.error { background: #ffe6e6; color: #d00; margin-right: auto; }
-.msg img { max-width: 100%; border-radius: 12px; margin-top: 6px; }
-.file-msg {
-      display: flex; align-items: center; gap: 8px; font-size: 14px;
-    }
-.file-msg span {
-      background: #e0e0e0; padding: 6px 10px; border-radius: 12px;
-    }
+    #chat { flex: 1; overflow-y: auto; padding: 16px; background: #fff; min-height: 0; }
+   .msg { margin: 12px 0; padding: 10px 14px; border-radius: 18px; max-width: 85%; word-wrap: break-word; font-size: 15px; line-height: 1.5; }
+   .user { background: #e8f0fe; margin-left: auto; }
+   .ai { background: #f7f7f7; margin-right: auto; }
+   .error { background: #ffe6e6; color: #d00; margin-right: auto; }
+   .msg img { max-width: 100%; border-radius: 12px; margin-top: 6px; }
+   .file-msg { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+   .file-msg span { background: #e0e0e0; padding: 6px 10px; border-radius: 12px; }
 
-/* Added for related questions */
-.related-title {
-      font-size: 13px; color: #666; margin: 8px 0 6px 4px;
-    }
-.related-item {
+   .related-title { font-size: 13px; color: #666; margin: 10px 0 6px 4px; }
+   .related-item {
       background: #f0f0f0; border: 1px solid #ddd; border-radius: 16px;
       padding: 10px 12px; font-size: 14px; margin-bottom: 6px; cursor: pointer;
     }
-.related-item:active { background: #e0e0e0; }
+   .related-item:active { background: #e0e0e0; }
 
-.input-area {
-      padding: 10px 12px; background: #007bff; border-top: 1px solid #0056b3;
-      flex-shrink: 0; padding-bottom: calc(10px + env(safe-area-inset-bottom));
+   .input-area {
+      padding: 10px 12px; background: #007bff; padding-bottom: calc(10px + env(safe-area-inset-bottom));
     }
-.input-box {
+   .input-box {
       display: flex; align-items: center; background: #fff; border-radius: 24px;
-      padding: 6px 8px 6px 14px; gap: 4px;
+      padding: 6px 8px 6px 14px; gap: 6px;
     }
-.input-box input {
-      flex: 1; border: none; background: transparent; font-size: 15px;
-      outline: none; color: #111; min-width: 0;
+   .input-box input { flex: 1; border: none; outline: none; font-size: 15px; }
+   .icon-btn {
+      width: 40px; height: 40px; border: none; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center; cursor: pointer;
+      background: transparent; font-size: 20px; flex-shrink: 0;
     }
-.input-box input::placeholder { color: #888; }
+   .send-btn {
+      width: 48px; height: 48px; border: none; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center; cursor: pointer;
+      background: #007bff; color: white; font-size: 22px; flex-shrink: 0;
+    }
 
-.icon-group { display: flex; align-items: center; gap: 2px; }
-
-.icon-btn {
-      width: 36px; height: 36px; border-radius: 50%; border: none; background: transparent;
-      font-size: 20px; cursor: pointer; display: flex; align-items: center;
-      justify-content: center; color: #555; flex-shrink: 0;
-    }
-.icon-btn:active { background: #e0e0e0; }
-
-.send-btn {
-      width: 40px; height: 40px; border-radius: 50%; border: none; background: #007bff;
-      color: white; font-size: 18px; cursor: pointer; display: flex;
-      align-items: center; justify-content: center; flex-shrink: 0;
-    }
-.send-btn:active { background: #0056b3; }
     #fileInput, #docInput { display: none; }
   </style>
 </head>
 <body>
   <header>
-    <div class="back">←</div>
     <h2>My AI Chat</h2>
-    <div class="menu" onclick="clearChat()">⋮</div>
+    <button class="clear-btn" onclick="clearChat()">Clear</button>
   </header>
-
   <div id="chat"></div>
 
   <div class="input-area">
     <div class="input-box">
       <input id="input" placeholder="Message" onkeydown="if(event.key==='Enter') send()">
-      <div class="icon-group">
-        <button class="icon-btn" onclick="document.getElementById('docInput').click()">📎</button>
-        <button class="icon-btn" onclick="document.getElementById('fileInput').click()">📷</button>
-        <input type="file" id="fileInput" accept="image/*" capture="camera">
-        <input type="file" id="docInput" accept=".pdf,.txt,.doc,.docx,.csv,.json,.md">
-        <button class="send-btn" onclick="send()">➤</button>
-      </div>
+      <button class="icon-btn" onclick="document.getElementById('docInput').click()">📎</button>
+      <button class="icon-btn" onclick="document.getElementById('fileInput').click()">📷</button>
+      <input type="file" id="fileInput" accept="image/*" capture="camera">
+      <input type="file" id="docInput" accept=".pdf,.txt,.doc,.docx,.csv,.json,.md">
+      <button class="send-btn" onclick="send()">➤</button>
     </div>
   </div>
 
@@ -120,7 +96,6 @@ app.get('/', (req, res) => {
       const input = document.getElementById('input');
       const msg = input.value.trim();
       if (!msg) return;
-
       addMsg(msg, 'user');
       history.push({ role: 'user', content: [{ type: 'text', text: msg }] });
       input.value = '';
@@ -134,10 +109,13 @@ app.get('/', (req, res) => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ messages: history })
         });
-
         const data = await res.json();
-        addMsg(data.answer || 'No response', data.error? 'error' : 'ai', data.related);
-        if (!data.error) history.push({ role: 'assistant', content: [{ type: 'text', text: data.answer }] });
+        if (data.error) {
+          addMsg('Error: ' + data.reply, 'error');
+          return;
+        }
+        addMsg(data.answer, 'ai', data.related);
+        history.push({ role: 'assistant', content: [{ type: 'text', text: data.answer }] });
       } catch (err) {
         addMsg('Network error: ' + err.message, 'error');
       }
@@ -149,6 +127,7 @@ app.get('/', (req, res) => {
       div.className = 'msg ' + cls;
 
       let html = text;
+
       if (related && related.length > 0) {
         html += '<div class="related-title">Related questions</div>';
         related.forEach(q => {
@@ -184,7 +163,7 @@ app.get('/', (req, res) => {
         history.push({
           role: 'user',
           content: [
-            { type: 'text', text: 'What do you see in this image?' },
+            { type: 'text', text: 'Describe this image' },
             { type: 'image_url', image_url: { url: base64 } }
           ]
         });
@@ -197,23 +176,14 @@ app.get('/', (req, res) => {
     document.getElementById('docInput').addEventListener('change', async (e) => {
       const file = e.target.files[0];
       if (!file) return;
-
-      addMsg('<div class="file-msg">📄 <span>' + file.name + '</span></div>', 'user');
-
+      addMsg('📄 ' + file.name, 'user');
       const formData = new FormData();
       formData.append('document', file);
-
       const res = await fetch('/document', { method: 'POST', body: formData });
       const data = await res.json();
-
       if (data.text) {
-        history.push({
-          role: 'user',
-          content: [{ type: 'text', text: 'Document: ' + file.name + '\\n\\nContent:\\n' + data.text }]
-        });
+        history.push({ role: 'user', content: [{ type: 'text', text: 'Document: ' + data.text }] });
         await callAI();
-      } else {
-        addMsg('Failed to read document: ' + data.error, 'error');
       }
       e.target.value = '';
     });
@@ -226,17 +196,18 @@ app.get('/', (req, res) => {
 app.post('/chat', async (req, res) => {
   try {
     if (!process.env.GROQ_API_KEY) {
-      return res.json({ reply: 'GROQ_API_KEY not set in Render', error: true });
+      return res.json({ reply: 'GROQ_API_KEY not set in Render environment variables', error: true });
     }
 
     const messages = [
       {
         role: 'system',
-        content: `You are a helpful assistant. Answer the question.
-        After your answer, add a new line with exactly: RELATED_QUESTIONS:
-        Then list 3 short follow-up questions, each on a new line starting with 1. 2. 3.`
+        content: `You are a helpful assistant. Give complete answers in 2-4 sentences.
+ALWAYS end your response with a new line, then exactly: RELATED_QUESTIONS:
+Then list exactly 3 short follow-up questions, each on a new line starting with 1. 2. 3.
+Do not add any text after the 3rd question.`
       },
-  ...(req.body.messages || [])
+     ...req.body.messages
     ];
 
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -249,7 +220,7 @@ app.post('/chat', async (req, res) => {
         model: 'meta-llama/llama-4-scout-17b-16e-instruct',
         messages: messages,
         temperature: 0.7,
-        max_tokens: 1200
+        max_tokens: 1500
       })
     });
 
@@ -259,7 +230,7 @@ app.post('/chat', async (req, res) => {
     }
 
     const data = await response.json();
-    let reply = data.choices?.[0]?.message?.content || 'Empty response';
+    let reply = data.choices?.[0]?.message?.content || 'No response';
 
     let answer = reply;
     let related = [];
@@ -269,9 +240,9 @@ app.post('/chat', async (req, res) => {
       answer = parts[0].trim();
       const qBlock = parts[1].trim();
       related = qBlock.split(/\\n/)
-  .map(line => line.replace(/^\\d+\\.\\s*/, '').trim())
-  .filter(line => line.length > 0)
-  .slice(0, 3);
+       .map(line => line.replace(/^\\d+\\.\\s*/, '').trim())
+       .filter(line => line.length > 0)
+       .slice(0, 3);
     }
 
     res.json({ answer, related, error: false });
@@ -283,25 +254,11 @@ app.post('/chat', async (req, res) => {
 
 app.post('/document', upload.single('document'), async (req, res) => {
   try {
-    const file = req.file;
-    let text = '';
-
-    if (file.mimetype === 'text/plain' || file.originalname.endsWith('.txt') || file.originalname.endsWith('.md')) {
-      text = file.buffer.toString('utf-8');
-    } else if (file.mimetype === 'application/json') {
-      text = file.buffer.toString('utf-8');
-    } else if (file.mimetype === 'text/csv') {
-      text = file.buffer.toString('utf-8');
-    } else {
-      text = '[File uploaded: ' + file.originalname + ']. For PDFs and DOCX, text extraction needs extra libraries. For now, I can see the file name and size: ' + (file.size / 1024).toFixed(1) + ' KB.';
-    }
-
+    const text = req.file.buffer.toString('utf-8');
     res.json({ text });
   } catch (error) {
     res.json({ error: error.message });
   }
 });
 
-app.listen(PORT, () => {
-  console.log('Server running on port ' + PORT);
-});
+app.listen(PORT, () => console.log('Server running on port ' + PORT));
