@@ -16,9 +16,9 @@ app.get('/', (req, res) => {
   <title>My AI Chat</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { 
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
-      background: #f5f5f5; 
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f5f5f5;
       height: 100vh;
       display: flex;
       flex-direction: column;
@@ -31,14 +31,14 @@ app.get('/', (req, res) => {
       flex-shrink: 0;
     }
     header h2 { font-size: 18px; font-weight: 600; }
-    #chat { 
+    #chat {
       flex: 1;
-      overflow-y: auto; 
+      overflow-y: auto;
       padding: 12px;
       background: white;
     }
-   .msg { 
-      margin: 8px 0; 
+  .msg {
+      margin: 8px 0;
       padding: 10px 14px;
       border-radius: 18px;
       max-width: 85%;
@@ -46,22 +46,22 @@ app.get('/', (req, res) => {
       font-size: 15px;
       line-height: 1.4;
     }
-   .user { 
-      background: #007bff; 
-      color: white; 
+  .user {
+      background: #007bff;
+      color: white;
       margin-left: auto;
     }
-   .ai { 
-      background: #e9ecef; 
-      color: #333; 
+  .ai {
+      background: #e9ecef;
+      color: #333;
       margin-right: auto;
     }
-   .error {
+  .error {
       background: #ffe6e6;
       color: #d00;
       margin-right: auto;
     }
-  .input-area {
+ .input-area {
       display: flex;
       gap: 8px;
       padding: 12px;
@@ -69,22 +69,22 @@ app.get('/', (req, res) => {
       border-top: 1px solid #ddd;
       flex-shrink: 0;
     }
-    input { 
+    input {
       flex: 1;
-      padding: 12px; 
-      font-size: 16px; 
-      border: 1px solid #ddd; 
+      padding: 12px;
+      font-size: 16px;
+      border: 1px solid #ddd;
       border-radius: 20px;
       outline: none;
     }
     input:focus { border-color: #007bff; }
-    button { 
-      padding: 12px 20px; 
-      font-size: 15px; 
-      background: #007bff; 
-      color: white; 
-      border: none; 
-      border-radius: 20px; 
+    button {
+      padding: 12px 20px;
+      font-size: 15px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 20px;
       cursor: pointer;
       font-weight: 600;
       flex-shrink: 0;
@@ -102,25 +102,25 @@ app.get('/', (req, res) => {
     <input id="input" placeholder="Type a message..." onkeydown="if(event.key==='Enter') send()">
     <button id="sendBtn" onclick="send()">Send</button>
   </div>
-  
+
   <script>
     async function send() {
       const input = document.getElementById('input');
       const btn = document.getElementById('sendBtn');
       const msg = input.value.trim();
       if (!msg) return;
-      
+
       addMsg('You', msg, 'user');
       input.value = '';
       btn.disabled = true;
-      
+
       try {
         const res = await fetch('/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ message: msg })
         });
-        
+
         const data = await res.json();
         addMsg('AI', data.reply || 'No response', data.error? 'error' : 'ai');
       } catch (err) {
@@ -129,7 +129,7 @@ app.get('/', (req, res) => {
         btn.disabled = false;
       }
     }
-    
+
     function addMsg(who, text, cls) {
       const chat = document.getElementById('chat');
       const div = document.createElement('div');
@@ -150,7 +150,7 @@ app.post('/chat', async (req, res) => {
     if (!process.env.GROQ_API_KEY) {
       return res.json({ reply: 'GROQ_API_KEY not set in Render', error: true });
     }
-    
+
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -158,21 +158,21 @@ app.post('/chat', async (req, res) => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'llama3-8b-8192',
+        model: 'llama-3.1-8b-instant',
         messages: [{ role: 'user', content: req.body.message }],
         temperature: 0.7
       })
     });
-    
+
     if (!response.ok) {
       const err = await response.text();
       return res.json({ reply: 'GROQ error: ' + err, error: true });
     }
-    
+
     const data = await response.json();
     const reply = data.choices?.[0]?.message?.content || 'Empty response';
     res.json({ reply });
-    
+
   } catch (error) {
     res.json({ reply: 'Server error: ' + error.message, error: true });
   }
