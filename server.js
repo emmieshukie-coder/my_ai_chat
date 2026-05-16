@@ -3,20 +3,20 @@ const app = express();
 app.use(express.json());
 app.use(express.static('.'));
 
-const META_API_KEY = process.env.META_API_KEY;
+const GROQ_API_KEY = process.env.GROQ_API_KEY;
 
 app.post('/chat', async (req, res) => {
   const { message } = req.body;
 
   try {
-    const response = await fetch('https://api.llama.com/v1/chat/completions', {
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${META_API_KEY}`,
+        'Authorization': `Bearer ${GROQ_API_KEY}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'Llama-4-Maverick-17B-128E-Instruct-FP8',
+        model: 'llama-3.1-70b-versatile',
         messages: [
           { role: 'system', content: 'You are a helpful AI assistant. Be concise and friendly.' },
           { role: 'user', content: message }
@@ -26,7 +26,12 @@ app.post('/chat', async (req, res) => {
     });
 
     const data = await response.json();
-    res.json({ reply: data.completion_message.content.text });
+    
+    if (!response.ok) {
+      return res.status(500).json({ error: data.error?.message || 'Groq API error' });
+    }
+
+    res.json({ reply: data.choices[0].message.content });
   } catch (err) {
     res.status(500).json({ error: 'Something went wrong' });
   }
