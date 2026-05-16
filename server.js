@@ -51,7 +51,7 @@ app.get('/', (req, res) => {
       padding: 12px;
       background: white;
     }
-.msg {
+ .msg {
       margin: 8px 0;
       padding: 10px 14px;
       border-radius: 18px;
@@ -60,12 +60,22 @@ app.get('/', (req, res) => {
       font-size: 15px;
       line-height: 1.4;
     }
-.user { background: #007bff; color: white; margin-left: auto; }
-.ai { background: #e9ecef; color: #333; margin-right: auto; }
-.error { background: #ffe6e6; color: #d00; margin-right: auto; }
-.msg img { max-width: 100%; border-radius: 12px; margin-top: 6px; }
+ .user {
+      background: #007bff;
+      color: white;
+      margin-left: auto;
+    }
+ .ai {
+      background: #e9ecef;
+      color: #333;
+      margin-right: auto;
+    }
+ .error {
+      background: #ffe6e6;
+      color: #d00;
+      margin-right: auto;
+    }
 .msg audio { width: 100%; margin-top: 6px; }
-
 .input-area {
       display: flex;
       gap: 8px;
@@ -75,7 +85,7 @@ app.get('/', (req, res) => {
       flex-shrink: 0;
       align-items: center;
     }
-    input[type="text"] {
+    input {
       flex: 1;
       padding: 12px;
       font-size: 16px;
@@ -84,7 +94,7 @@ app.get('/', (req, res) => {
       outline: none;
     }
     input:focus { border-color: #007bff; }
-    button.send {
+    button {
       padding: 12px 20px;
       font-size: 15px;
       background: #007bff;
@@ -97,23 +107,22 @@ app.get('/', (req, res) => {
     }
     button.icon {
       padding: 10px;
-      background: #e9ecef;
-      border: none;
-      border-radius: 50%;
-      cursor: pointer;
-      font-size: 18px;
       width: 44px;
       height: 44px;
+      border-radius: 50%;
+      background: #e9ecef;
+      color: #333;
       flex-shrink: 0;
     }
     button.recording { background: #ff4444; color: white; }
+    button:active { background: #0056b3; }
     button:disabled { background: #ccc; }
     #fileInput { display: none; }
   </style>
 </head>
 <body>
   <header>
-    <h2>⚽ My AI Chat</h2>
+    <h2>🤖 My AI Chat</h2>
     <button onclick="clearChat()">Clear</button>
   </header>
   <div id="chat"></div>
@@ -121,8 +130,8 @@ app.get('/', (req, res) => {
     <input type="file" id="fileInput" accept="image/*;capture=camera">
     <button class="icon" onclick="document.getElementById('fileInput').click()">📷</button>
     <button class="icon" id="recordBtn">🎤</button>
-    <input type="text" id="input" placeholder="Type a message..." onkeydown="if(event.key==='Enter') send()">
-    <button class="send" id="sendBtn" onclick="send()">Send</button>
+    <input id="input" placeholder="Type a message..." onkeydown="if(event.key==='Enter') send()">
+    <button id="sendBtn" onclick="send()">Send</button>
   </div>
 
   <script>
@@ -133,29 +142,20 @@ app.get('/', (req, res) => {
 
     async function send() {
       const input = document.getElementById('input');
+      const btn = document.getElementById('sendBtn');
       const msg = input.value.trim();
       if (!msg) return;
 
       addMsg('You', msg, 'user');
-      history.push({ role: 'user', content: [{ type: 'text', text: msg }] });
+      history.push({ role: 'user', content: msg });
       input.value = '';
-      await callAI();
-    }
+      btn.disabled = true;
 
-    async function sendImage(base64) {
-      addMsg('You', '<img src="' + base64 + '">', 'user');
-      history.push({
-        role: 'user',
-        content: [
-          { type: 'text', text: 'What do you see in this image?' },
-          { type: 'image_url', image_url: { url: base64 } }
-        ]
-      });
       await callAI();
+      btn.disabled = false;
     }
 
     async function callAI() {
-      document.getElementById('sendBtn').disabled = true;
       try {
         const res = await fetch('/chat', {
           method: 'POST',
@@ -164,13 +164,10 @@ app.get('/', (req, res) => {
         });
 
         const data = await res.json();
-        const reply = data.reply || 'No response';
-        addMsg('AI', reply, data.error? 'error' : 'ai');
-        if (!data.error) history.push({ role: 'assistant', content: [{ type: 'text', text: reply }] });
+        addMsg('AI', data.reply || 'No response', data.error? 'error' : 'ai');
+        if (!data.error) history.push({ role: 'assistant', content: data.reply });
       } catch (err) {
         addMsg('AI', 'Network error: ' + err.message, 'error');
-      } finally {
-        document.getElementById('sendBtn').disabled = false;
       }
     }
 
@@ -193,9 +190,14 @@ app.get('/', (req, res) => {
     document.getElementById('fileInput').addEventListener('change', async (e) => {
       const file = e.target.files[0];
       if (!file) return;
-      const reader = new FileReader();
-      reader.onload = () => sendImage(reader.result);
-      reader.readAsDataURL(file);
+      const formData = new FormData();
+      formData.append('image', file);
+
+      addMsg('You', '📷 Photo sent', 'user');
+      history.push({ role: 'user', content: '[Image uploaded]' });
+
+      await fetch('/upload', { method: 'POST', body: formData });
+      await callAI();
       e.target.value = '';
     });
 
@@ -217,7 +219,7 @@ app.get('/', (req, res) => {
 
           if (data.text) {
             addMsg('You', data.text, 'user');
-            history.push({ role: 'user', content: [{ type: 'text', text: data.text }] });
+            history.push({ role: 'user', content: data.text });
             await callAI();
           } else {
             addMsg('AI', 'Transcription failed: ' + data.error, 'error');
@@ -252,10 +254,9 @@ app.post('/chat', async (req, res) => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'meta-llama/llama-4-scout-17b-16e-instruct',
-        messages: req.body.messages || [],
-        temperature: 0.7,
-        max_tokens: 1024
+        model: 'llama-3.1-8b-instant',
+        messages: req.body.messages || [{ role: 'user', content: req.body.message }],
+        temperature: 0.7
       })
     });
 
@@ -273,7 +274,7 @@ app.post('/chat', async (req, res) => {
   }
 });
 
-// Handle voice transcription with Whisper
+// Handle voice transcription
 app.post('/transcribe', upload.single('audio'), async (req, res) => {
   try {
     if (!process.env.GROQ_API_KEY) {
@@ -301,6 +302,11 @@ app.post('/transcribe', upload.single('audio'), async (req, res) => {
   } catch (error) {
     res.json({ error: error.message });
   }
+});
+
+// Handle image upload placeholder
+app.post('/upload', upload.single('image'), (req, res) => {
+  res.json({ ok: true });
 });
 
 app.listen(PORT, () => {
