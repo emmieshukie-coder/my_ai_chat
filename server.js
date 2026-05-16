@@ -53,7 +53,7 @@ app.get('/', (req, res) => {
       background: #fff;
       min-height: 0;
     }
- .msg {
+.msg {
       margin: 12px 0;
       padding: 10px 14px;
       border-radius: 18px;
@@ -62,51 +62,51 @@ app.get('/', (req, res) => {
       font-size: 15px;
       line-height: 1.5;
     }
- .user {
-      background: #f0f0f0;
+.user {
+      background: #e8f0fe;
       color: #111;
       margin-left: auto;
     }
- .ai {
+.ai {
       background: #f7f7f7;
       color: #111;
       margin-right: auto;
     }
- .error {
+.error {
       background: #ffe6e6;
       color: #d00;
       margin-right: auto;
     }
- .msg img { max-width: 100%; border-radius: 12px; margin-top: 6px; }
- .msg audio { width: 100%; margin-top: 6px; }
- .file-msg {
+.msg img { max-width: 100%; border-radius: 12px; margin-top: 6px; }
+.msg audio { width: 100%; margin-top: 6px; }
+.file-msg {
       display: flex;
       align-items: center;
       gap: 8px;
       font-size: 14px;
     }
- .file-msg span {
+.file-msg span {
       background: #e0e0e0;
       padding: 6px 10px;
       border-radius: 12px;
     }
 
- .input-area {
+.input-area {
       padding: 10px 12px;
-      background: #fff;
-      border-top: 1px solid #e5e5e5;
+      background: #007bff;
+      border-top: 1px solid #0056b3;
       flex-shrink: 0;
       padding-bottom: calc(10px + env(safe-area-inset-bottom));
     }
- .input-box {
+.input-box {
       display: flex;
       align-items: center;
-      background: #f5f5f5;
+      background: #fff;
       border-radius: 24px;
       padding: 6px 8px 6px 14px;
       gap: 4px;
     }
- .input-box input {
+.input-box input {
       flex: 1;
       border: none;
       background: transparent;
@@ -115,15 +115,15 @@ app.get('/', (req, res) => {
       color: #111;
       min-width: 0;
     }
- .input-box input::placeholder { color: #888; }
+.input-box input::placeholder { color: #888; }
 
- .icon-group {
+.icon-group {
       display: flex;
       align-items: center;
       gap: 2px;
    }
 
- .icon-btn {
+.icon-btn {
       width: 36px;
       height: 36px;
       border-radius: 50%;
@@ -137,23 +137,23 @@ app.get('/', (req, res) => {
       color: #555;
       flex-shrink: 0;
     }
- .icon-btn:active { background: #e0e0e0; }
+.icon-btn:active { background: #e0e0e0; }
 
- .mic-btn {
+.send-btn {
       width: 40px;
       height: 40px;
       border-radius: 50%;
       border: none;
-      background: #25d366;
+      background: #007bff;
       color: white;
-      font-size: 20px;
+      font-size: 18px;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
     }
- .mic-btn.recording { background: #ff4444; }
+.send-btn:active { background: #0056b3; }
     #fileInput, #docInput { display: none; }
   </style>
 </head>
@@ -174,16 +174,13 @@ app.get('/', (req, res) => {
         <button class="icon-btn" onclick="document.getElementById('fileInput').click()">📷</button>
         <input type="file" id="fileInput" accept="image/*;capture=camera">
         <input type="file" id="docInput" accept=".pdf,.txt,.doc,.docx,.csv,.json,.md">
-        <button class="mic-btn" id="recordBtn">🎤</button>
+        <button class="send-btn" onclick="send()">➤</button>
       </div>
     </div>
   </div>
 
   <script>
     let history = [];
-    let mediaRecorder;
-    let audioChunks = [];
-    let isRecording = false;
 
     async function send() {
       const input = document.getElementById('input');
@@ -228,7 +225,6 @@ app.get('/', (req, res) => {
       }
     }
 
-    // Image upload
     document.getElementById('fileInput').addEventListener('change', async (e) => {
       const file = e.target.files[0];
       if (!file) return;
@@ -249,7 +245,6 @@ app.get('/', (req, res) => {
       e.target.value = '';
     });
 
-    // Document upload
     document.getElementById('docInput').addEventListener('change', async (e) => {
       const file = e.target.files[0];
       if (!file) return;
@@ -272,37 +267,6 @@ app.get('/', (req, res) => {
         addMsg('Failed to read document: ' + data.error, 'error');
       }
       e.target.value = '';
-    });
-
-    document.getElementById('recordBtn').addEventListener('click', async () => {
-      if (!isRecording) {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        mediaRecorder = new MediaRecorder(stream);
-        audioChunks = [];
-        mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
-        mediaRecorder.onstop = async () => {
-          const blob = new Blob(audioChunks, { type: 'audio/webm' });
-          const formData = new FormData();
-          formData.append('audio', blob, 'voice.webm');
-          addMsg('<audio controls src="' + URL.createObjectURL(blob) + '"></audio>', 'user');
-          const res = await fetch('/transcribe', { method: 'POST', body: formData });
-          const data = await res.json();
-          if (data.text) {
-            addMsg(data.text, 'user');
-            history.push({ role: 'user', content: [{ type: 'text', text: data.text }] });
-            await callAI();
-          } else {
-            addMsg('Transcription failed: ' + data.error, 'error');
-          }
-        };
-        mediaRecorder.start();
-        isRecording = true;
-        document.getElementById('recordBtn').classList.add('recording');
-      } else {
-        mediaRecorder.stop();
-        isRecording = false;
-        document.getElementById('recordBtn').classList.remove('recording');
-      }
     });
   </script>
 </body>
@@ -344,36 +308,6 @@ app.post('/chat', async (req, res) => {
   }
 });
 
-app.post('/transcribe', upload.single('audio'), async (req, res) => {
-  try {
-    if (!process.env.GROQ_API_KEY) {
-      return res.json({ error: 'GROQ_API_KEY not set' });
-    }
-
-    const formData = new FormData();
-    formData.append('file', req.file.buffer, { filename: 'audio.webm', contentType: 'audio/webm' });
-    formData.append('model', 'whisper-large-v3');
-
-    const response = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', {
-      method: 'POST',
-      headers: { 'Authorization': 'Bearer ' + process.env.GROQ_API_KEY },
-      body: formData
-    });
-
-    if (!response.ok) {
-      const err = await response.text();
-      return res.json({ error: err });
-    }
-
-    const data = await response.json();
-    res.json({ text: data.text });
-
-  } catch (error) {
-    res.json({ error: error.message });
-  }
-});
-
-// Document upload handler
 app.post('/document', upload.single('document'), async (req, res) => {
   try {
     const file = req.file;
