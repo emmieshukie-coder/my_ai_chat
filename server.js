@@ -49,6 +49,16 @@ app.get('/', (req, res) => {
       background: #e0e0e0; padding: 6px 10px; border-radius: 12px;
     }
 
+/* Added for related questions */
+.related-title {
+      font-size: 13px; color: #666; margin: 8px 0 6px 4px;
+    }
+.related-item {
+      background: #f0f0f0; border: 1px solid #ddd; border-radius: 16px;
+      padding: 10px 12px; font-size: 14px; margin-bottom: 6px; cursor: pointer;
+    }
+.related-item:active { background: #e0e0e0; }
+
 .input-area {
       padding: 10px 12px; background: #007bff; border-top: 1px solid #0056b3;
       flex-shrink: 0; padding-bottom: calc(10px + env(safe-area-inset-bottom));
@@ -126,20 +136,35 @@ app.get('/', (req, res) => {
         });
 
         const data = await res.json();
-        addMsg(data.reply || 'No response', data.error? 'error' : 'ai');
-        if (!data.error) history.push({ role: 'assistant', content: [{ type: 'text', text: data.reply }] });
+        addMsg(data.answer || 'No response', data.error? 'error' : 'ai', data.related);
+        if (!data.error) history.push({ role: 'assistant', content: [{ type: 'text', text: data.answer }] });
       } catch (err) {
         addMsg('Network error: ' + err.message, 'error');
       }
     }
 
-    function addMsg(text, cls) {
+    function addMsg(text, cls, related = []) {
       const chat = document.getElementById('chat');
       const div = document.createElement('div');
       div.className = 'msg ' + cls;
-      div.innerHTML = text;
+
+      let html = text;
+      if (related && related.length > 0) {
+        html += '<div class="related-title">Related questions</div>';
+        related.forEach(q => {
+          const safeQ = q.replace(/'/g, "\\\\'").replace(/"/g, '\\\\"');
+          html += '<div class="related-item" onclick="sendRelated(\\'' + safeQ + '\\')">' + q + '</div>';
+        });
+      }
+
+      div.innerHTML = html;
       chat.appendChild(div);
       chat.scrollTop = chat.scrollHeight;
+    }
+
+    function sendRelated(q) {
+      document.getElementById('input').value = q;
+      send();
     }
 
     function clearChat() {
@@ -204,6 +229,16 @@ app.post('/chat', async (req, res) => {
       return res.json({ reply: 'GROQ_API_KEY not set in Render', error: true });
     }
 
+    const messages = [
+      {
+        role: 'system',
+        content: `You are a helpful assistant. Answer the question.
+        After your answer, add a new line with exactly: RELATED_QUESTIONS:
+        Then list 3 short follow-up questions, each on a new line starting with 1. 2. 3.`
+      },
+  ...(req.body.messages || [])
+    ];
+
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -212,9 +247,9 @@ app.post('/chat', async (req, res) => {
       },
       body: JSON.stringify({
         model: 'meta-llama/llama-4-scout-17b-16e-instruct',
-        messages: req.body.messages || [],
+        messages: messages,
         temperature: 0.7,
-        max_tokens: 1024
+        max_tokens: 1200
       })
     });
 
@@ -224,8 +259,22 @@ app.post('/chat', async (req, res) => {
     }
 
     const data = await response.json();
-    const reply = data.choices?.[0]?.message?.content || 'Empty response';
-    res.json({ reply });
+    let reply = data.choices?.[0]?.message?.content || 'Empty response';
+
+    let answer = reply;
+    let related = [];
+
+    if (reply.includes('RELATED_QUESTIONS:')) {
+      const parts = reply.split('RELATED_QUESTIONS:');
+      answer = parts[0].trim();
+      const qBlock = parts[1].trim();
+      related = qBlock.split(/\\n/)
+  .map(line => line.replace(/^\\d+\\.\\s*/, '').trim())
+  .filter(line => line.length > 0)
+  .slice(0, 3);
+    }
+
+    res.json({ answer, related, error: false });
 
   } catch (error) {
     res.json({ reply: 'Server error: ' + error.message, error: true });
