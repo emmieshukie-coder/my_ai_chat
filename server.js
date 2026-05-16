@@ -53,7 +53,7 @@ app.get('/', (req, res) => {
 .send-btn {
       width: 48px; height: 48px; border: none; border-radius: 50%;
       display: flex; align-items: center; justify-content: center; cursor: pointer;
-      background: #007bff; color: white; font-size: 20px; flex-shrink: 0;
+      background: #007bff; color: white; font-size: 22px; flex-shrink: 0;
     }
 
     #fileInput, #docInput { display: none; }
@@ -96,13 +96,13 @@ app.get('/', (req, res) => {
         });
         const data = await res.json();
         if (data.error) {
-          addMsg(data.reply, 'ai');
+          addMsg('Error: ' + data.reply, 'ai');
           return;
         }
         addMsg(data.answer, 'ai', data.related);
         history.push({ role: 'assistant', content: [{ type: 'text', text: data.answer }] });
       } catch (err) {
-        addMsg('Error: ' + err.message, 'ai');
+        addMsg('Network error: ' + err.message, 'ai');
       }
     }
 
@@ -174,17 +174,17 @@ app.get('/', (req, res) => {
 app.post('/chat', async (req, res) => {
   try {
     if (!process.env.GROQ_API_KEY) {
-      return res.json({ reply: 'GROQ_API_KEY not set', error: true });
+      return res.json({ reply: 'GROQ_API_KEY not set in Render environment variables', error: true });
     }
 
     const messages = [
       {
         role: 'system',
-        content: `You are a helpful assistant. Give complete answers, not 1 word.
+        content: `You are a helpful assistant. Give complete answers in 2-4 sentences.
         After your answer, add a new line with exactly: RELATED_QUESTIONS:
         Then list 3 short follow-up questions, each on a new line starting with 1. 2. 3.`
       },
-   ...req.body.messages
+  ...req.body.messages
     ];
 
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -201,6 +201,11 @@ app.post('/chat', async (req, res) => {
       })
     });
 
+    if (!response.ok) {
+      const err = await response.text();
+      return res.json({ reply: 'GROQ error: ' + err, error: true });
+    }
+
     const data = await response.json();
     let reply = data.choices?.[0]?.message?.content || 'No response';
 
@@ -212,9 +217,9 @@ app.post('/chat', async (req, res) => {
       answer = parts[0].trim();
       const qBlock = parts[1].trim();
       related = qBlock.split(/\\n/)
-    .map(line => line.replace(/^\\d+\\.\\s*/, '').trim())
-    .filter(line => line.length > 0)
-    .slice(0, 3);
+   .map(line => line.replace(/^\\d+\\.\\s*/, '').trim())
+   .filter(line => line.length > 0)
+   .slice(0, 3);
     }
 
     res.json({ answer, related });
